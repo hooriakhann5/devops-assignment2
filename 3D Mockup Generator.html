@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<!-- saved from url=(0051)http://localhost:3000/mockup?product=regular-tshirt -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Mockup Generator</title>
+    <link rel="stylesheet" href="./3D Mockup Generator_files/styles.css">
+    <script async="" src="./3D Mockup Generator_files/es-module-shims.js.download"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">My Website</div>
+        <ul class="nav-links">
+            <li><a href="http://localhost:3000/">Home</a></li>
+            <li><a href="http://localhost:3000/products">Products</a></li>
+            <li><a href="http://localhost:3000/mockup" class="active">3D Mockup Generator</a></li>
+        </ul>
+    </nav>
+    <div class="mockup-workspace">
+        <div class="controls-sidebar">
+            <button class="control-btn upload-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16L12 8M12 8L15 11M12 8L9 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                    <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                Upload Your Design
+            </button>
+
+            <div class="control-group prompt-box">
+                <label>Design Prompt</label>
+                <div class="prompt-input-container">
+                    <textarea id="designPrompt" placeholder="Describe your design idea..." rows="3" class="prompt-textarea"></textarea>
+                    <button class="generate-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3V21M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+                        </svg>
+                        Generate
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Garment Color</label>
+                <div class="color-picker-container">
+                    <div class="selected-color" id="selectedColor"></div>
+                    <div class="color-picker-popup" id="colorPickerPopup">
+                        <div class="color-picker-area">
+                            <div class="color-gradient" style="background: linear-gradient(rgba(0, 0, 0, 0) 0%, rgb(0, 0, 0) 100%), linear-gradient(to right, rgb(255, 255, 255) 0%, rgb(255, 0, 0) 100%);"></div>
+                            <input type="range" class="hue-slider" id="hueSlider" min="0" max="360" value="0">
+                        </div>
+                        <div class="rgb-inputs">
+                            <div class="rgb-input">
+                                <label>R</label>
+                                <input type="number" id="rInput" min="0" max="255" value="52">
+                            </div>
+                            <div class="rgb-input">
+                                <label>G</label>
+                                <input type="number" id="gInput" min="0" max="255" value="71">
+                            </div>
+                            <div class="rgb-input">
+                                <label>B</label>
+                                <input type="number" id="bInput" min="0" max="255" value="91">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Background Color</label>
+                <div class="color-picker-container">
+                    <div class="selected-color" id="bgSelectedColor" style="background-color: rgb(107, 114, 128);"></div>
+                    <div class="color-picker-popup" id="bgColorPickerPopup">
+                        <div class="preset-colors">
+                            <button class="preset-color" style="background-color: #000000;" data-color="rgb(0, 0, 0)">Black</button>
+                            <button class="preset-color" style="background-color: #1E3A8A;" data-color="rgb(30, 58, 138)">Blue</button>
+                            <button class="preset-color" style="background-color: #6B7280;" data-color="rgb(107, 114, 128)">Grey</button>
+                            <button class="preset-color" style="background-color: #E5E0D5;" data-color="rgb(229, 224, 213)">Beige</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label>Drawing Tools</label>
+                <div class="drawing-tools">
+                    <button class="tool-btn brush-btn" title="Brush Tool">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M3 21L12 12M12 12L16 8L20 4L12 12ZM12 12L9 15L7 17L5 19" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn eraser-btn" title="Eraser">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M16 2L22 8L8 22H2V16L16 2Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                    <button class="tool-btn clear-btn" title="Clear All">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M19 7L18.1327 19.1425C18.0579 20.1891 17.187 21 16.1378 21H7.86224C6.81296 21 5.94208 20.1891 5.86732 19.1425L5 7M10 11V17M14 11V17M4 7H20M15 7V4C15 3.44772 14.5523 3 14 3H10C9.44772 3 9 3.44772 9 4V7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="brush-size-control">
+                    <label>Brush Size</label>
+                    <input type="range" id="brushSize" min="5" max="50" value="20">
+                </div>
+            </div>
+
+            <button class="control-btn export-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 16L4 17C4 18.6569 5.34315 20 7 20L17 20C18.6569 20 20 18.6569 20 17L20 16M16 12L12 16M12 16L8 12M12 16L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                Export
+            </button>
+        </div>
+
+        <div class="preview-area" style="background-color: rgb(107, 114, 128);">
+            <div class="preview-content" id="previewContent">
+                <div class="canvas-container">
+                    <div id="three-container" style="cursor: grab;"></div>
+                    <canvas id="drawingCanvas" class="drawing-canvas" width="1477" height="1477" style="cursor: default; left: 61.675px; top: -277.059px;"></canvas>
+                </div>
+            <img src="./3D Mockup Generator_files/3D Basic T-shirt.png" alt="regular-tshirt Preview" class="product-preview"></div>
+        </div>
+    </div>
+
+    <!-- Add upload interface -->
+    <div class="upload-interface" id="uploadInterface">
+        <div class="interface-header">
+            <div class="interface-controls">
+                <button class="interface-btn upload-design-btn">Upload Design</button>
+                <button class="interface-btn save-layout-btn">Save Layout</button>
+                <button class="interface-btn reset-btn">Reset</button>
+            </div>
+            <button class="close-interface" id="closeUploadInterface">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="interface-content">
+            <div class="position-guide">
+                <h3>POSITION GUIDE</h3>
+                <div class="guide-images">
+                    <div class="guide-image" data-position="front">
+                        <div class="guide-placeholder dropzone">
+                            <img src="./3D Mockup Generator_files/front.png" alt="Front Position Guide" class="guide-img">
+                            <div class="design-container"></div>
+                            <span>FRONT</span>
+                        </div>
+                    </div>
+                    <div class="guide-image" data-position="back">
+                        <div class="guide-placeholder dropzone">
+                            <img src="./3D Mockup Generator_files/back.png" alt="Back Position Guide" class="guide-img">
+                            <div class="design-container"></div>
+                            <span>BACK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="./3D Mockup Generator_files/drawing-tools.js.download"></script>
+    <script>
+        // Wait for DOM to be fully loaded before initializing
+        document.addEventListener('DOMContentLoaded', function() {
+        // Product image mapping
+        const productImages = {
+                'regular-tshirt': '/images/3D Basic T-shirt.png',
+                'oversized-tshirt': '/images/3D Basic T-shirt.png',
+                'cropped-tshirt': '/images/3D Cropped,Boxy,T-Shirt.png',
+                'sweatshirt': '/images/3D Oversized Sweatshirt.png',
+                'hoodie': '/images/3D Oversized Hoodie.png',
+                'zip-hoodie': '/images/3D Oversized Zip Hoodie.png',
+                'polo': '/images/3D Oversized Polo.png'
+        };
+
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        // Get the product parameter from URL
+        const selectedProduct = getUrlParameter('product');
+        const previewContent = document.getElementById('previewContent');
+        
+            if (!previewContent) {
+                console.error('Preview content element not found');
+                return;
+        }
+
+        function setupCanvas(image) {
+            const canvasContainer = document.querySelector('.canvas-container');
+            const drawingCanvas = document.getElementById('drawingCanvas');
+                
+            if (!canvasContainer || !drawingCanvas) {
+                console.error('Canvas elements not found');
+                return;
+            }
+
+            const brushSize = document.getElementById('brushSize');
+            
+            if (!brushSize) {
+                console.error('Drawing tool elements not found');
+                return;
+            }
+
+            let ctx = drawingCanvas.getContext('2d', { willReadFrequently: true });
+            
+            function resizeCanvases() {
+                if (!canvasContainer || !drawingCanvas) return;
+
+                const containerRect = canvasContainer.getBoundingClientRect();
+                const scale = Math.min(
+                    containerRect.width / image.naturalWidth,
+                    containerRect.height / image.naturalHeight
+                ) * 1.6;
+
+                const width = image.naturalWidth * scale;
+                const height = image.naturalHeight * scale;
+
+                drawingCanvas.width = width;
+                drawingCanvas.height = height;
+
+                const left = `${(containerRect.width - width) / 2}px`;
+                const top = `${(containerRect.height - height) / 2}px`;
+                drawingCanvas.style.left = left;
+                drawingCanvas.style.top = top;
+
+                ctx = drawingCanvas.getContext('2d', { willReadFrequently: true });
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+                ctx.strokeStyle = 'rgba(99, 102, 241, 0.5)';
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.lineWidth = brushSize.value;
+            }
+
+            // Initialize canvas
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+        }
+
+            // Create and add product image
+            if (selectedProduct && productImages[selectedProduct]) {
+                const productImage = document.createElement('img');
+                productImage.src = productImages[selectedProduct];
+                productImage.alt = selectedProduct + ' Preview';
+                productImage.className = 'product-preview';
+                
+                productImage.onload = function() {
+                    setupCanvas(this);
+                };
+                
+                previewContent.appendChild(productImage);
+            } else {
+                // Show empty state
+                previewContent.innerHTML = `
+                    <div class="empty-state">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 16L12 8M12 8L15 11M12 8L9 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <p>Upload your design to get started</p>
+                        <span>Click the "Upload Your Design" button to begin</span>
+                    </div>
+                `;
+            }
+
+        // Upload button handling
+        const uploadBtn = document.querySelector('.upload-btn');
+        const uploadInterface = document.getElementById('uploadInterface');
+        const closeUploadInterface = document.getElementById('closeUploadInterface');
+        const uploadDesignBtn = document.querySelector('.upload-design-btn');
+        const saveLayoutBtn = document.querySelector('.save-layout-btn');
+        const resetBtn = document.querySelector('.reset-btn');
+        
+        uploadBtn.addEventListener('click', function() {
+            uploadInterface.classList.add('active');
+        });
+
+        closeUploadInterface.addEventListener('click', function() {
+            uploadInterface.classList.remove('active');
+        });
+
+        // Modify the upload design functionality
+        uploadDesignBtn.addEventListener('click', function() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.onchange = function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        // Create the design only in the upload interface
+                        const designWrapper = document.createElement('div');
+                        designWrapper.className = 'floating-design';
+                        
+                        const designImg = document.createElement('img');
+                        designImg.src = event.target.result;
+                        designImg.className = 'uploaded-design';
+                        designWrapper.appendChild(designImg);
+                        
+                        // Add resize handles
+                        ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+                            const handle = document.createElement('div');
+                            handle.className = `resize-handle ${pos}`;
+                            designWrapper.appendChild(handle);
+                        });
+
+                        // Set initial position at center of the upload interface
+                        const interfaceContent = document.querySelector('.interface-content');
+                        const rect = interfaceContent.getBoundingClientRect();
+                        const startX = (rect.width - 150) / 2;
+                        const startY = (rect.height - 150) / 2;
+                        designWrapper.style.left = startX + 'px';
+                        designWrapper.style.top = startY + 'px';
+
+                        // Add the design to the upload interface
+                        interfaceContent.appendChild(designWrapper);
+
+                        // Make it draggable
+                        makeDraggableInContainer(designWrapper, interfaceContent);
+                        initResizing(designWrapper);
+                    };
+                    reader.readAsDataURL(file);
+                }
+            };
+            input.click();
+        });
+
+        function createDraggableDesign(imageData) {
+            // Create floating design element
+            const designWrapper = document.createElement('div');
+            designWrapper.className = 'floating-design';
+            
+            const designImg = document.createElement('img');
+            designImg.src = imageData;
+            designImg.className = 'uploaded-design';
+            designWrapper.appendChild(designImg);
+            
+            // Add resize handles
+            ['nw', 'ne', 'sw', 'se'].forEach(pos => {
+                const handle = document.createElement('div');
+                handle.className = `resize-handle ${pos}`;
+                designWrapper.appendChild(handle);
+            });
+
+            // Set initial position at center of screen
+            const rect = designWrapper.getBoundingClientRect();
+            const startX = (window.innerWidth - 150) / 2;
+            const startY = (window.innerHeight - 150) / 2;
+            designWrapper.style.left = startX + 'px';
+            designWrapper.style.top = startY + 'px';
+
+            document.body.appendChild(designWrapper);
+
+            // Make it draggable
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let dragStartX;
+            let dragStartY;
+            let currentRotation = 0;
+            let currentScale = 1;
+
+            designWrapper.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                if (e.target.classList.contains('resize-handle')) return;
+                
+                const rect = designWrapper.getBoundingClientRect();
+                dragStartX = e.clientX - rect.left;
+                dragStartY = e.clientY - rect.top;
+                
+                if (e.target === designImg || e.target === designWrapper) {
+                    isDragging = true;
+                    designWrapper.style.cursor = 'grabbing';
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    currentX = e.clientX - dragStartX;
+                    currentY = e.clientY - dragStartY;
+
+                    designWrapper.style.left = currentX + 'px';
+                    designWrapper.style.top = currentY + 'px';
+
+                    // Check if over a dropzone
+                    const dropzones = document.querySelectorAll('.dropzone');
+                    dropzones.forEach(dropzone => {
+                        const rect = dropzone.getBoundingClientRect();
+                        if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                            e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                            dropzone.classList.add('active-dropzone');
+                        } else {
+                            dropzone.classList.remove('active-dropzone');
+                        }
+                    });
+                }
+            }
+
+            function dragEnd(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                designWrapper.style.cursor = 'grab';
+
+                // Check if dropped on a dropzone
+                const dropzones = document.querySelectorAll('.dropzone');
+                dropzones.forEach(dropzone => {
+                    const rect = dropzone.getBoundingClientRect();
+                    if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                        e.clientY >= rect.top && e.clientY <= rect.bottom) {
+                        
+                        // Clear existing designs in the dropzone
+                        const container = dropzone.querySelector('.design-container');
+                        container.innerHTML = '';
+                        
+                        // Clone the design and add it to the dropzone
+                        const clone = designWrapper.cloneNode(true);
+                        clone.classList.remove('floating-design');
+                        clone.classList.add('design-wrapper');
+                        
+                        // Position the design at the drop point relative to the container
+                        const containerRect = container.getBoundingClientRect();
+                        const dropX = e.clientX - containerRect.left - (clone.offsetWidth / 2);
+                        const dropY = e.clientY - containerRect.top - (clone.offsetHeight / 2);
+                        
+                        clone.style.left = dropX + 'px';
+                        clone.style.top = dropY + 'px';
+                        clone.style.transform = `rotate(${currentRotation}deg) scale(${currentScale})`;
+                        
+                        container.appendChild(clone);
+                        
+                        // Make the placed design draggable within its container
+                        makeDraggableInContainer(clone, container);
+                        initResizing(clone);
+                    }
+                    dropzone.classList.remove('active-dropzone');
+                });
+
+                // Remove the floating design
+                designWrapper.remove();
+            }
+
+            // Initialize resizing
+            initResizing(designWrapper);
+        }
+
+        function makeDraggableInContainer(element, container) {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let dragStartX;
+            let dragStartY;
+            let currentRotation = 0;
+            let currentScale = 1;
+
+            element.addEventListener('mousedown', dragStart);
+            container.addEventListener('mousemove', drag);
+            container.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                if (e.target.classList.contains('resize-handle')) return;
+                
+                const rect = element.getBoundingClientRect();
+                dragStartX = e.clientX - rect.left;
+                dragStartY = e.clientY - rect.top;
+                
+                if (e.target === element.querySelector('img') || e.target === element) {
+                    isDragging = true;
+                    element.style.cursor = 'grabbing';
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    
+                    const containerRect = container.getBoundingClientRect();
+                    currentX = e.clientX - containerRect.left - dragStartX;
+                    currentY = e.clientY - containerRect.top - dragStartY;
+
+                    // Keep the design within container bounds
+                    currentX = Math.max(0, Math.min(currentX, containerRect.width - element.offsetWidth));
+                    currentY = Math.max(0, Math.min(currentY, containerRect.height - element.offsetHeight));
+
+                    element.style.left = currentX + 'px';
+                    element.style.top = currentY + 'px';
+                }
+            }
+
+            function dragEnd() {
+                if (!isDragging) return;
+                isDragging = false;
+                element.style.cursor = 'grab';
+            }
+        }
+
+        function initResizing(element) {
+            const handles = element.querySelectorAll('.resize-handle');
+            let isResizing = false;
+            let currentHandle = null;
+            let startX, startY, startWidth, startHeight, startRotation, startScale;
+
+            handles.forEach(handle => {
+                handle.addEventListener('mousedown', startResize);
+            });
+
+            function startResize(e) {
+                e.preventDefault();
+                isResizing = true;
+                currentHandle = e.target;
+                
+                const rect = element.getBoundingClientRect();
+                startX = e.clientX;
+                startY = e.clientY;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                
+                // Get current rotation and scale from transform
+                const transform = window.getComputedStyle(element).transform;
+                const matrix = new DOMMatrix(transform);
+                startRotation = Math.round(Math.atan2(matrix.m21, matrix.m11) * (180/Math.PI));
+                startScale = Math.sqrt(matrix.m11 * matrix.m11 + matrix.m21 * matrix.m21);
+
+                document.addEventListener('mousemove', resize);
+                document.addEventListener('mouseup', stopResize);
+            }
+
+            function resize(e) {
+                if (!isResizing) return;
+                
+                const deltaX = e.clientX - startX;
+                const deltaY = e.clientY - startY;
+                
+                let newWidth = startWidth;
+                let newHeight = startHeight;
+                let newRotation = startRotation;
+                let newScale = startScale;
+
+                // Handle rotation with Shift key
+                if (e.shiftKey) {
+                    newRotation = startRotation + (deltaX * 0.5);
+                } else {
+                    // Handle scaling
+                    if (currentHandle.classList.contains('se')) {
+                        newWidth = startWidth + deltaX;
+                        newHeight = startHeight + deltaY;
+                    } else if (currentHandle.classList.contains('sw')) {
+                        newWidth = startWidth - deltaX;
+                        newHeight = startHeight + deltaY;
+                    } else if (currentHandle.classList.contains('ne')) {
+                        newWidth = startWidth + deltaX;
+                        newHeight = startHeight - deltaY;
+                    } else if (currentHandle.classList.contains('nw')) {
+                        newWidth = startWidth - deltaX;
+                        newHeight = startHeight - deltaY;
+                    }
+
+                    // Maintain aspect ratio with Alt key
+                    if (e.altKey) {
+                        const aspectRatio = startWidth / startHeight;
+                        if (Math.abs(deltaX) > Math.abs(deltaY)) {
+                            newHeight = newWidth / aspectRatio;
+                        } else {
+                            newWidth = newHeight * aspectRatio;
+                        }
+                    }
+
+                    // Calculate new scale
+                    newScale = Math.min(newWidth / startWidth, newHeight / startHeight);
+                }
+
+                // Apply transformations
+                element.style.width = `${newWidth}px`;
+                element.style.height = `${newHeight}px`;
+                element.style.transform = `rotate(${newRotation}deg) scale(${newScale})`;
+            }
+
+            function stopResize() {
+                isResizing = false;
+                document.removeEventListener('mousemove', resize);
+                document.removeEventListener('mouseup', stopResize);
+            }
+        }
+
+        // Reset button functionality
+        resetBtn.addEventListener('click', function() {
+            const designContainers = document.querySelectorAll('.design-container');
+            designContainers.forEach(container => {
+                container.innerHTML = '';
+            });
+            // Also remove any floating designs in the interface
+            const floatingDesigns = document.querySelectorAll('.floating-design');
+            floatingDesigns.forEach(design => design.remove());
+        });
+
+        // Close interface when clicking outside
+        document.addEventListener('click', function(e) {
+            if (e.target !== uploadInterface && 
+                !uploadInterface.contains(e.target) && 
+                e.target !== uploadBtn && 
+                !uploadBtn.contains(e.target)) {
+                uploadInterface.classList.remove('active');
+            }
+        });
+
+        // Initialize color picker
+        initializeColorPicker();
+        initializeBackgroundColorPicker();
+    });
+
+    // Color picker functionality
+    function initializeColorPicker() {
+        const selectedColor = document.getElementById('selectedColor');
+        const colorPickerPopup = document.getElementById('colorPickerPopup');
+        const colorGradient = document.querySelector('.color-gradient');
+        const hueSlider = document.getElementById('hueSlider');
+        const rInput = document.getElementById('rInput');
+        const gInput = document.getElementById('gInput');
+        const bInput = document.getElementById('bInput');
+        const productPreview = document.querySelector('.product-preview');
+
+        // Check if required elements exist
+        if (!selectedColor || !colorPickerPopup || !colorGradient || !hueSlider || !rInput || !gInput || !bInput) {
+            console.error('Color picker elements not found');
+            return;
+        }
+        
+        let currentHue = 0;
+        let currentSaturation = 0;
+        let currentLightness = 1;
+        let isPickingColor = false;
+
+        // Show/hide color picker
+        selectedColor.addEventListener('click', (e) => {
+            e.stopPropagation();
+            colorPickerPopup.classList.toggle('active');
+        });
+
+        // Hide color picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (colorPickerPopup && selectedColor && !colorPickerPopup.contains(e.target) && e.target !== selectedColor) {
+                colorPickerPopup.classList.remove('active');
+            }
+        });
+
+        // Update color from gradient
+        colorGradient.addEventListener('mousedown', (e) => {
+            isPickingColor = true;
+            updateColorFromGradient(e);
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (isPickingColor && colorGradient && colorGradient.contains(e.target)) {
+                updateColorFromGradient(e);
+            }
+        });
+
+        document.addEventListener('mouseup', () => {
+            isPickingColor = false;
+        });
+
+        function updateColorFromGradient(e) {
+            if (!colorGradient) return;
+            
+            const rect = colorGradient.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            currentSaturation = Math.min(Math.max(x / rect.width, 0), 1);
+            currentLightness = 1 - Math.min(Math.max(y / rect.height, 0), 1);
+            
+            updateColor();
+        }
+
+        // Update color from hue slider
+        hueSlider.addEventListener('input', (e) => {
+            currentHue = e.target.value;
+            updateGradient();
+            updateColor();
+        });
+
+        // Update color from RGB inputs
+        [rInput, gInput, bInput].forEach(input => {
+            input.addEventListener('input', () => {
+                const r = parseInt(rInput.value);
+                const g = parseInt(gInput.value);
+                const b = parseInt(bInput.value);
+                
+                if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                    const rgb = `rgb(${r}, ${g}, ${b})`;
+                    if (selectedColor) {
+                        selectedColor.style.backgroundColor = rgb;
+                    }
+                    if (productPreview) {
+                        updateProductPreview(r, g, b);
+                    }
+                }
+            });
+        });
+
+        function updateGradient() {
+            if (!colorGradient) return;
+            colorGradient.style.background = `
+                linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 100%),
+                linear-gradient(to right, rgba(255,255,255,1) 0%, hsl(${currentHue}, 100%, 50%) 100%)
+            `;
+        }
+
+        function updateColor() {
+            if (!selectedColor) return;
+
+            const hsl = `hsl(${currentHue}, ${currentSaturation * 100}%, ${currentLightness * 100}%)`;
+            selectedColor.style.backgroundColor = hsl;
+            
+            // Convert HSL to RGB
+            const h = currentHue / 360;
+            const s = currentSaturation;
+            const l = currentLightness;
+            
+            let r, g, b;
+            
+            if (s === 0) {
+                r = g = b = l;
+            } else {
+                const hue2rgb = (p, q, t) => {
+                    if (t < 0) t += 1;
+                    if (t > 1) t -= 1;
+                    if (t < 1/6) return p + (q - p) * 6 * t;
+                    if (t < 1/2) return q;
+                    if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+                    return p;
+                };
+                
+                const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+                const p = 2 * l - q;
+                
+                r = Math.round(hue2rgb(p, q, h + 1/3) * 255);
+                g = Math.round(hue2rgb(p, q, h) * 255);
+                b = Math.round(hue2rgb(p, q, h - 1/3) * 255);
+            }
+            
+            // Update RGB inputs
+            if (rInput && gInput && bInput) {
+                rInput.value = r;
+                gInput.value = g;
+                bInput.value = b;
+            }
+            
+            // Update product preview
+            if (productPreview) {
+                updateProductPreview(r, g, b);
+            }
+        }
+
+        function updateProductPreview(r, g, b) {
+            if (!productPreview) return;
+
+            productPreview.style.filter = null;
+            productPreview.style.backgroundColor = null;
+            productPreview.style.mixBlendMode = null;
+            
+            // Create a CSS filter that will colorize the white garment
+            const brightness = (r * 0.299 + g * 0.587 + b * 0.114) / 255;
+            const saturate = Math.max(r, g, b) / 255 * 100;
+            
+            productPreview.style.filter = `
+                brightness(${brightness})
+                saturate(${saturate}%)
+                sepia(100%)
+                hue-rotate(${currentHue}deg)
+                brightness(1)
+                contrast(1.2)
+            `;
+        }
+
+        // Initialize gradient
+        updateGradient();
+    }
+
+    // Background color picker functionality
+    function initializeBackgroundColorPicker() {
+        const bgSelectedColor = document.getElementById('bgSelectedColor');
+        const bgColorPickerPopup = document.getElementById('bgColorPickerPopup');
+        const presetColors = document.querySelectorAll('.preset-color');
+        const previewArea = document.querySelector('.preview-area');
+
+        // Check if required elements exist
+        if (!bgSelectedColor || !bgColorPickerPopup || !previewArea) {
+            console.error('Background color picker elements not found');
+            return;
+        }
+
+        // Show/hide color picker
+        bgSelectedColor.addEventListener('click', (e) => {
+            e.stopPropagation();
+            bgColorPickerPopup.classList.toggle('active');
+        });
+
+        // Hide color picker when clicking outside
+        document.addEventListener('click', (e) => {
+            if (bgColorPickerPopup && bgSelectedColor && !bgColorPickerPopup.contains(e.target) && e.target !== bgSelectedColor) {
+                bgColorPickerPopup.classList.remove('active');
+            }
+        });
+
+        // Handle preset color selection
+        presetColors.forEach(button => {
+            if (!button) return;
+            button.addEventListener('click', () => {
+                const color = button.getAttribute('data-color');
+                if (bgSelectedColor) {
+                    bgSelectedColor.style.backgroundColor = color;
+                }
+                if (previewArea) {
+                    previewArea.style.backgroundColor = color;
+                }
+                if (bgColorPickerPopup) {
+                    bgColorPickerPopup.classList.remove('active');
+                }
+            });
+        });
+    }
+
+    function setupControls() {
+        const container = document.getElementById('three-container');
+        if (!container) return;
+
+        // Mouse events
+        container.addEventListener('mousedown', onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        // Touch events
+        container.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend', onTouchEnd);
+
+        // Keyboard events
+        document.addEventListener('keydown', onKeyDown);
+
+        // Setup rotation controls
+        const rotateLeft = document.querySelector('.rotate-left');
+        const rotateRight = document.querySelector('.rotate-right');
+        const autoRotateBtn = document.querySelector('.auto-rotate');
+
+        if (rotateLeft) {
+            rotateLeft.addEventListener('click', () => {
+                if (currentModel) {
+                    targetRotation += Math.PI / 4; // Rotate 45 degrees left
+                }
+            });
+        }
+
+        if (rotateRight) {
+            rotateRight.addEventListener('click', () => {
+                if (currentModel) {
+                    targetRotation -= Math.PI / 4; // Rotate 45 degrees right
+                }
+            });
+        }
+
+        if (autoRotateBtn) {
+            autoRotateBtn.addEventListener('click', () => {
+                autoRotate = !autoRotate;
+                autoRotateBtn.classList.toggle('active');
+            });
+        }
+    }
+
+    function onMouseDown(event) {
+        event.preventDefault();
+        isDragging = true;
+        previousMousePosition = {
+            x: event.clientX,
+            y: event.clientY
+        };
+        const container = document.getElementById('three-container');
+        if (container) {
+            container.style.cursor = 'grabbing';
+        }
+    }
+
+    function onMouseMove(event) {
+        if (!isDragging || !currentModel) return;
+
+        const deltaMove = {
+            x: event.clientX - previousMousePosition.x,
+            y: event.clientY - previousMousePosition.y
+        };
+
+        targetRotation += deltaMove.x * rotationSpeed;
+
+        previousMousePosition = {
+            x: event.clientX,
+            y: event.clientY
+        };
+    }
+
+    function onMouseUp() {
+        isDragging = false;
+        const container = document.getElementById('three-container');
+        if (container) {
+            container.style.cursor = 'grab';
+        }
+    }
+
+    function onTouchStart(event) {
+        event.preventDefault();
+        if (event.touches.length === 1) {
+            isDragging = true;
+            previousMousePosition = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+        }
+    }
+
+    function onTouchMove(event) {
+        event.preventDefault();
+        if (!isDragging || !currentModel || event.touches.length !== 1) return;
+
+        const deltaMove = {
+            x: event.touches[0].clientX - previousMousePosition.x,
+            y: event.touches[0].clientY - previousMousePosition.y
+        };
+
+        targetRotation += deltaMove.x * rotationSpeed;
+
+        previousMousePosition = {
+            x: event.touches[0].clientX,
+            y: event.touches[0].clientY
+        };
+    }
+
+    function onTouchEnd() {
+        isDragging = false;
+    }
+
+    function onKeyDown(event) {
+        if (!currentModel) return;
+
+        const rotationAmount = Math.PI / 6; // 30 degrees
+        switch(event.key) {
+            case 'ArrowLeft':
+                targetRotation += rotationAmount;
+                break;
+            case 'ArrowRight':
+                targetRotation -= rotationAmount;
+                break;
+        }
+    }
+
+    function onWindowResize() {
+        const container = document.getElementById('three-container');
+        if (!container || !camera || !renderer) return;
+
+        const aspect = container.clientWidth / container.clientHeight;
+        camera.aspect = aspect;
+        camera.updateProjectionMatrix();
+        renderer.setSize(container.clientWidth, container.clientHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        if (currentModel) {
+            if (autoRotate) {
+                targetRotation += 0.02;
+            }
+
+            // Smoothly interpolate current rotation to target rotation
+            const rotationDiff = targetRotation - currentRotation;
+            currentRotation += rotationDiff * 0.1;
+
+            // Apply the rotation to the model
+            currentModel.rotation.y = currentRotation;
+        }
+
+        if (renderer && scene && camera) {
+            renderer.render(scene, camera);
+        }
+    }
+
+    // Initialize everything when the module loads
+    init();
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
+
+        let camera, scene, renderer;
+        let currentModel = null;
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        let rotationSpeed = 0.005;
+        let autoRotate = false;
+        let targetRotation = 0;
+        let currentRotation = 0;
+
+        // Model mapping with exact filenames
+        const modelMapping = {
+            'regular-tshirt': '3D Basic T-shirt.glb',
+            'oversized-tshirt': '3D Basic T-shirt.glb',
+            'cropped-tshirt': '3D Cropped,Boxy,T-Shirt.glb',
+            'sweatshirt': '3D Oversized Sweatshirt.glb',
+            'hoodie': '3D Oversized Hoodie.glb',
+            'zip-hoodie': '3D Oversized Zip Hoodie.glb',
+            'polo': '3D Oversized Polo.glb'
+        };
+
+        function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xE5E5E5);
+
+            // Create camera
+            const container = document.getElementById('three-container');
+            if (!container) {
+                console.error('Three.js container not found');
+                return;
+            }
+
+            const aspect = container.clientWidth / container.clientHeight;
+            camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 1000);
+            camera.position.set(0, 0, 5);
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ 
+                antialias: true,
+                alpha: true 
+            });
+            renderer.setPixelRatio(window.devicePixelRatio);
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+
+            const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.8);
+            hemiLight.position.set(0, 1, 0);
+            scene.add(hemiLight);
+
+            // Setup controls
+            setupControls();
+
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize, false);
+
+            // Load model based on URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const productType = urlParams.get('product') || 'regular-tshirt';
+            loadModel(productType);
+
+            // Start animation loop
+            animate();
+        }
+
+        function loadModel(productType) {
+            const loader = new GLTFLoader();
+            const dracoLoader = new DRACOLoader();
+            dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            loader.setDRACOLoader(dracoLoader);
+
+            const container = document.getElementById('three-container');
+            if (!container) return;
+
+            container.innerHTML = '<div class="loading-model">Loading 3D Model...</div>';
+
+            const modelFile = modelMapping[productType] || '3D Basic T-shirt.glb';
+            const modelPath = `models/${modelFile}`;
+
+            console.log('Loading model:', modelPath);
+
+            loader.load(
+                modelPath,
+                function (gltf) {
+                    console.log('Model loaded successfully');
+                    if (currentModel) {
+                        scene.remove(currentModel);
+                    }
+                    currentModel = gltf.scene;
+                    scene.add(currentModel);
+
+                    // Center and scale model
+                    const box = new THREE.Box3().setFromObject(currentModel);
+                    const center = box.getCenter(new THREE.Vector3());
+                    const size = box.getSize(new THREE.Vector3());
+
+                    const maxDim = Math.max(size.x, size.y, size.z);
+                    const scale = 2 / maxDim;
+                    currentModel.scale.setScalar(scale);
+
+                    currentModel.position.sub(center.multiplyScalar(scale));
+
+                    // Remove loading message
+                    container.innerHTML = '';
+                },
+                function (xhr) {
+                    const percent = (xhr.loaded / xhr.total * 100).toFixed(0);
+                    console.log('Loading progress:', percent + '%');
+                    const loadingEl = container.querySelector('.loading-model');
+                    if (loadingEl) {
+                        loadingEl.textContent = `Loading 3D Model... ${percent}%`;
+                    }
+                },
+                function (error) {
+                    console.error('Error loading model:', error);
+                    console.error('Failed to load:', modelPath);
+                    container.innerHTML = '<div class="loading-error">Error loading 3D model. Please check console for details.</div>';
+
+                    // Attempt to load default model if the requested one fails
+                    if (modelFile !== '3D Basic T-shirt.glb') {
+                        console.log('Attempting to load default model...');
+                        loadModel('regular-tshirt');
+                    }
+                }
+            );
+        }
+
+        function onMouseDown(event) {
+            event.preventDefault();
+            isDragging = true;
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+            const container = document.getElementById('three-container');
+            if (container) {
+                container.style.cursor = 'grabbing';
+            }
+        }
+
+        function onMouseMove(event) {
+            if (!isDragging || !currentModel) return;
+
+            const deltaMove = {
+                x: event.clientX - previousMousePosition.x,
+                y: event.clientY - previousMousePosition.y
+            };
+
+            targetRotation += deltaMove.x * rotationSpeed;
+
+            previousMousePosition = {
+                x: event.clientX,
+                y: event.clientY
+            };
+        }
+
+        function onMouseUp() {
+            isDragging = false;
+            const container = document.getElementById('three-container');
+            if (container) {
+                container.style.cursor = 'grab';
+            }
+        }
+
+        function onTouchStart(event) {
+            event.preventDefault();
+            if (event.touches.length === 1) {
+                isDragging = true;
+                previousMousePosition = {
+                    x: event.touches[0].clientX,
+                    y: event.touches[0].clientY
+                };
+            }
+        }
+
+        function onTouchMove(event) {
+            event.preventDefault();
+            if (!isDragging || !currentModel || event.touches.length !== 1) return;
+
+            const deltaMove = {
+                x: event.touches[0].clientX - previousMousePosition.x,
+                y: event.touches[0].clientY - previousMousePosition.y
+            };
+
+            targetRotation += deltaMove.x * rotationSpeed;
+
+            previousMousePosition = {
+                x: event.touches[0].clientX,
+                y: event.touches[0].clientY
+            };
+        }
+
+        function onTouchEnd() {
+            isDragging = false;
+        }
+
+        function onKeyDown(event) {
+            if (!currentModel) return;
+
+            const rotationAmount = Math.PI / 6; // 30 degrees
+            switch(event.key) {
+                case 'ArrowLeft':
+                    targetRotation += rotationAmount;
+                    break;
+                case 'ArrowRight':
+                    targetRotation -= rotationAmount;
+                    break;
+            }
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('three-container');
+            if (!container || !camera || !renderer) return;
+
+            const aspect = container.clientWidth / container.clientHeight;
+            camera.aspect = aspect;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.clientWidth, container.clientHeight);
+        }
+
+        // Initialize everything when the module loads
+        init();
+    </script>
+
+ </body></html>

@@ -1,0 +1,136 @@
+// Drawing tools state
+let currentTool = null;
+let isDrawing = false;
+let ctx = null;
+
+// Initialize drawing tools
+function initializeDrawingTools() {
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    const brushBtn = document.querySelector('.brush-btn');
+    const eraserBtn = document.querySelector('.eraser-btn');
+    const clearBtn = document.querySelector('.clear-btn');
+    const brushSize = document.getElementById('brushSize');
+
+    if (!drawingCanvas || !brushBtn || !eraserBtn || !clearBtn || !brushSize) {
+        console.error('Drawing tool elements not found');
+        return;
+    }
+
+    // Remove any existing active states
+    brushBtn.classList.remove('active');
+    eraserBtn.classList.remove('active');
+    drawingCanvas.style.cursor = 'default';
+
+    // Tool selection with deselection capability
+    brushBtn.addEventListener('click', () => {
+        if (currentTool === 'brush') {
+            // Deselect brush
+            currentTool = null;
+            brushBtn.classList.remove('active');
+            drawingCanvas.style.cursor = 'default';
+        } else {
+            // Select brush
+            currentTool = 'brush';
+            brushBtn.classList.add('active');
+            eraserBtn.classList.remove('active');
+            drawingCanvas.style.cursor = 'crosshair';
+        }
+        updateCanvasContext();
+    });
+
+    eraserBtn.addEventListener('click', () => {
+        if (currentTool === 'eraser') {
+            // Deselect eraser
+            currentTool = null;
+            eraserBtn.classList.remove('active');
+            drawingCanvas.style.cursor = 'default';
+        } else {
+            // Select eraser
+            currentTool = 'eraser';
+            eraserBtn.classList.add('active');
+            brushBtn.classList.remove('active');
+            drawingCanvas.style.cursor = 'crosshair';
+        }
+        updateCanvasContext();
+    });
+
+    clearBtn.addEventListener('click', () => {
+        if (ctx) {
+            ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+        }
+    });
+
+    // Drawing functionality
+    drawingCanvas.addEventListener('mousedown', startDrawing);
+    drawingCanvas.addEventListener('mousemove', draw);
+    drawingCanvas.addEventListener('mouseup', stopDrawing);
+    drawingCanvas.addEventListener('mouseout', stopDrawing);
+
+    // Update brush size
+    brushSize.addEventListener('input', () => {
+        updateCanvasContext();
+    });
+
+    // Initial context setup
+    updateCanvasContext();
+}
+
+function updateCanvasContext() {
+    const drawingCanvas = document.getElementById('drawingCanvas');
+    const brushSize = document.getElementById('brushSize');
+    
+    if (!drawingCanvas || !brushSize) return;
+    
+    ctx = drawingCanvas.getContext('2d', { willReadFrequently: true });
+    if (ctx) {
+        ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+        ctx.strokeStyle = currentTool === 'eraser' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(99, 102, 241, 0.5)';
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.lineWidth = brushSize.value;
+    }
+}
+
+function startDrawing(e) {
+    if (!currentTool || !ctx) return; // Don't draw if no tool is selected
+
+    isDrawing = true;
+    const pos = getMousePos(e);
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    draw(e);
+}
+
+function draw(e) {
+    if (!isDrawing || !currentTool || !ctx) return;
+
+    const pos = getMousePos(e);
+    ctx.globalCompositeOperation = currentTool === 'eraser' ? 'destination-out' : 'source-over';
+    ctx.lineTo(pos.x, pos.y);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+}
+
+function stopDrawing() {
+    isDrawing = false;
+    if (ctx) {
+        ctx.beginPath();
+    }
+}
+
+function getMousePos(e) {
+    const canvas = document.getElementById('drawingCanvas');
+    if (!canvas) return { x: 0, y: 0 };
+
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+    };
+}
+
+// Initialize when the DOM is loaded
+document.addEventListener('DOMContentLoaded', initializeDrawingTools); 

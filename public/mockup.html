@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Mockup Generator</title>
+    <link rel="stylesheet" href="styles.css">
+    <script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.156.1/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.156.1/examples/jsm/"
+        }
+    }
+    </script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">My Website</div>
+        <ul class="nav-links">
+            <li><a href="/">Home</a></li>
+            <li><a href="/products">Products</a></li>
+            <li><a href="/mockup" class="active">3D Mockup Generator</a></li>
+        </ul>
+    </nav>
+    <div class="mockup-workspace">
+        <div class="controls-sidebar">
+            <button class="control-btn upload-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 16L12 8M12 8L15 11M12 8L9 11" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M3 15V16C3 18.2091 4.79086 20 7 20H17C19.2091 20 21 18.2091 21 16V15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Upload Your Design
+            </button>
+
+            <div class="control-group prompt-box">
+                <label>Design Prompt</label>
+                <div class="prompt-input-container">
+                    <textarea 
+                        id="designPrompt" 
+                        placeholder="Describe your design idea..."
+                        rows="3"
+                        class="prompt-textarea"
+                    ></textarea>
+                    <button class="generate-btn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 3V21M3 12H21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        Generate
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="garmentHue">Garment Color</label>
+                <input type="color" id="garmentHue" style="width: 100%; height: 2.5rem; border: none; background: none; cursor: pointer;" value="#34475b">
+            </div>
+
+            <div class="control-group">
+                <label for="backgroundColorSelect">Background Color</label>
+                <select id="backgroundColorSelect" style="padding: 0.5rem; border-radius: 6px; border: 1px solid #ddd; font-size: 1rem;">
+                    <option value="#e5e5e0" selected>Beige-Grey</option>
+                    <option value="#888888">Grey</option>
+                    <option value="#222222">Light Black</option>
+                    <option value="#1a237e">Navy Blue</option>
+                </select>
+            </div>
+
+            <style>
+                .color-gradient {
+                    position: relative;
+                    width: 200px;
+                    height: 200px;
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+
+                #colorCanvas {
+                    width: 100%;
+                    height: 100%;
+                    cursor: crosshair;
+                }
+
+                .color-picker-cursor {
+                    position: absolute;
+                    width: 10px;
+                    height: 10px;
+                    border: 2px solid white;
+                    border-radius: 50%;
+                    transform: translate(-50%, -50%);
+                    pointer-events: none;
+                    box-shadow: 0 0 0 1px rgba(0,0,0,0.5);
+                }
+
+                .hue-slider {
+                    width: 200px;
+                    margin-top: 10px;
+                    -webkit-appearance: none;
+                    height: 10px;
+                    border-radius: 5px;
+                    background: linear-gradient(to right,
+                        hsl(0,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),
+                        hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%));
+                }
+
+                .hue-slider::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    width: 15px;
+                    height: 15px;
+                    border-radius: 50%;
+                    background: white;
+                    border: 1px solid #ccc;
+                    cursor: pointer;
+                }
+            </style>
+
+            <!-- Paint/Rotate Mode Toggle Button -->
+            <button id="modeToggleBtn" class="control-btn" style="margin-top: 1rem; background: #fff; color: #388e3c; border: 2px solid #388e3c;">Switch to Paint Mode</button>
+
+            <!-- Auto-Rotate Toggle Button -->
+            <button id="autoRotateToggleBtn" class="control-btn" style="margin-top: 1rem; background: #fff; color: #1976d2; border: 2px solid #1976d2;">Enable Auto-Rotate</button>
+
+            <!-- Inpaint/View Mode Toggle Button -->
+            <button id="inpaintModeToggleBtn" class="control-btn" style="margin-top: 1rem; background: #fff; color: #388e3c; border: 2px solid #388e3c;">Enable Inpaint Mode</button>
+
+            <!-- Customize Mockup Button -->
+            <button id="customizeMockupBtn" class="control-btn" style="margin-top: 1rem; background: #fff; color: #6366f1; border: 2px solid #6366f1;">Customize Mockup</button>
+
+            <button class="control-btn export-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 16L4 17C4 18.6569 5.34315 20 7 20L17 20C18.6569 20 20 18.6569 20 17L20 16M16 12L12 16M12 16L8 12M12 16L12 4" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Export
+            </button>
+        </div>
+
+        <div class="preview-area">
+            <div class="preview-content" id="previewContent" style="position: relative;">
+                <div id="three-container" class="three-container" style="position: relative;">
+                    <!-- Three.js canvas will be injected here by JS -->
+                    <canvas id="overlayCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: transparent; z-index: 10;"></canvas>
+                </div>
+                <canvas id="drawingCanvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; background: transparent; z-index: 20;"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { init } from './js/modelLoader.js';
+        // Initialize the 3D scene when the module loads
+        init();
+        // After Three.js initializes, set pointer-events: none on the WebGL canvas
+        window.addEventListener('DOMContentLoaded', () => {
+            const observer = new MutationObserver(() => {
+                const threeContainer = document.getElementById('three-container');
+                if (threeContainer) {
+                    const webglCanvas = threeContainer.querySelector('canvas');
+                    if (webglCanvas) {
+                        webglCanvas.style.pointerEvents = 'none';
+                        observer.disconnect();
+                    }
+                }
+            });
+            const threeContainer = document.getElementById('three-container');
+            if (threeContainer) {
+                observer.observe(threeContainer, { childList: true, subtree: true });
+            }
+        });
+
+          // (near the end of your file)
+            import * as THREE from 'three';
+
+            // Make THREE globally available for other functions to use
+            window.THREE = THREE;
+     // Customize Mockup button logic
+       document.addEventListener('DOMContentLoaded', function () {
+            const customizeBtn = document.getElementById('customizeMockupBtn');
+            if (customizeBtn) {
+                customizeBtn.addEventListener('click', async function () {
+                    // Get current canvas state as image
+                    const threeCanvas = document.querySelector('#three-container canvas');
+                    if (!threeCanvas) {
+                        alert('3D preview not available.');
+                        return;
+                    }
+
+                    // Get the prompt value
+                    const prompt = document.getElementById('designPrompt')?.value || '';
+                    if (!prompt.trim()) {
+                        alert('Please enter a design prompt before customizing.');
+                        return;
+                    }
+
+                    // Check if mask exists
+                    if (!window.maskCanvas) {
+                        alert('No mask available. Please enable Inpaint Mode and paint on the mockup first.');
+                        return;
+                    }
+
+                    // Show loading indicator
+                    customizeBtn.disabled = true;
+                    const originalBtnText = customizeBtn.textContent;
+                    customizeBtn.textContent = 'Processing...';
+
+                    try {
+                        // Get the current 3D canvas as base image
+                        threeCanvas.toBlob(async function (imageBlob) {
+                            if (!imageBlob) {
+                                alert('Failed to capture current mockup.');
+                                customizeBtn.disabled = false;
+                                customizeBtn.textContent = originalBtnText;
+                                return;
+                            }
+
+                            // Get the mask canvas
+                            window.maskCanvas.toBlob(async function (maskBlob) {
+                                if (!maskBlob) {
+                                    alert('Failed to generate mask image.');
+                                    customizeBtn.disabled = false;
+                                    customizeBtn.textContent = originalBtnText;
+                                    return;
+                                }
+
+                                // Create FormData for API request - make sure field names match FastAPI endpoint parameters
+                                const formData = new FormData();
+                                formData.append('image', imageBlob, 'image.png'); // Named exactly as in FastAPI endpoint
+                                formData.append('mask', maskBlob, 'mask.png'); // Named exactly as in FastAPI endpoint
+                                formData.append('prompt', prompt); // Required parameter
+
+                                // Optional parameters with default values from FastAPI
+                                formData.append('checkpoint_name', 'Finetuned_anime.safetensors');
+                                formData.append('negative_prompt', 'ugly, deformed, disfigured, poor quality, low quality');
+                                formData.append('width', '1080');
+                                formData.append('height', '1080');
+                                formData.append('steps', '30');
+                                formData.append('cfg', '9.0');
+                                formData.append('sampler_name', 'euler_ancestral');
+                                formData.append('scheduler', 'normal');
+
+                                // Optional: Add a random seed
+                                // formData.append('seed', Math.floor(Math.random() * 1000000));
+
+                                // Log what we're sending
+                                console.log('Sending request with prompt:', prompt);
+
+                                try {
+                                    // Call the API endpoint - use the correct endpoint: /generate/
+                                    const apiUrl = 'https://a2d9-121-52-146-243.ngrok-free.app/generate/';
+                                    console.log('Sending request to:', apiUrl);
+
+                                    const response = await fetch(apiUrl, {
+                                        method: 'POST',
+                                        body: formData,
+                                        // No Content-Type header - browser will set it automatically with FormData
+                                    });
+
+                                    console.log('Response:', response);
+
+                                    if (!response.ok) {
+                                        let errorMessage = 'Server error: ' + response.status;
+                                        try {
+                                            const errorData = await response.json();
+                                            errorMessage = errorData.detail || errorData.error || errorMessage;
+                                        } catch (e) {
+                                            // If response can't be parsed as JSON, use status text
+                                            errorMessage = response.statusText || errorMessage;
+                                        }
+                                        throw new Error(errorMessage);
+                                    }
+
+                                    const data = await response.json();
+                                    console.log('API response received');
+
+                                    // Check if we got images back - note the response format is different in your API
+                                    if (!data.image1 && !data.image2) {
+                                        throw new Error('No images returned from the API');
+                                    }
+
+                                    // Create image elements for both results
+                                    const resultContainer = document.createElement('div');
+                                    resultContainer.style.position = 'fixed';
+                                    resultContainer.style.top = '20px';
+                                    resultContainer.style.right = '20px';
+                                    resultContainer.style.display = 'flex';
+                                    resultContainer.style.flexDirection = 'column';
+                                    resultContainer.style.gap = '10px';
+                                    resultContainer.style.zIndex = '10000';
+
+                                    // Function to create image elements
+                                    const createImageElement = (base64Data, title) => {
+                                        const img = new Image();
+                                        img.src = 'data:image/png;base64,' + base64Data;
+                                        img.style.width = '300px';
+                                        img.style.border = '2px solid #6366f1';
+                                        img.style.borderRadius = '8px';
+                                        img.style.cursor = 'pointer';
+                                        img.title = title + ' - Click to apply this design';
+
+                                        // Add button to apply this design
+                                        const applyBtn = document.createElement('button');
+                                        applyBtn.textContent = 'Apply This Design';
+                                        applyBtn.style.padding = '8px';
+                                        applyBtn.style.backgroundColor = '#6366f1';
+                                        applyBtn.style.color = 'white';
+                                        applyBtn.style.border = 'none';
+                                        applyBtn.style.borderRadius = '4px';
+                                        applyBtn.style.marginTop = '5px';
+                                        applyBtn.style.cursor = 'pointer';
+
+                                        const wrapper = document.createElement('div');
+                                        wrapper.style.marginBottom = '15px';
+                                        wrapper.appendChild(img);
+                                        wrapper.appendChild(applyBtn);
+
+                                        // Event handler for applying the texture
+                                        applyBtn.onclick = function () {
+                                            if (window.applyGeneratedTexture && typeof window.applyGeneratedTexture === 'function') {
+                                                window.applyGeneratedTexture('data:image/png;base64,' + base64Data);
+                                                alert('Design applied successfully!');
+                                            } else {
+                                                alert('Cannot apply texture - applyGeneratedTexture function not available');
+                                            }
+                                        };
+
+                                        return wrapper;
+                                    };
+
+                                    // Close button for the entire result container
+                                    const closeBtn = document.createElement('button');
+                                    closeBtn.textContent = '× Close Results';
+                                    closeBtn.style.padding = '8px';
+                                    closeBtn.style.backgroundColor = '#ef4444';
+                                    closeBtn.style.color = 'white';
+                                    closeBtn.style.border = 'none';
+                                    closeBtn.style.borderRadius = '4px';
+                                    closeBtn.style.marginBottom = '10px';
+                                    closeBtn.style.cursor = 'pointer';
+                                    closeBtn.onclick = function () { resultContainer.remove(); };
+
+                                    resultContainer.appendChild(closeBtn);
+
+                                    // Add both images
+                                    if (data.image1) {
+                                        resultContainer.appendChild(createImageElement(data.image1, 'Design 1'));
+                                    }
+
+                                    if (data.image2) {
+                                        resultContainer.appendChild(createImageElement(data.image2, 'Design 2'));
+                                    }
+
+                                    // Add enhanced prompt info if available
+                                    if (data.prompt) {
+                                        const promptInfo = document.createElement('div');
+                                        promptInfo.style.padding = '10px';
+                                        promptInfo.style.backgroundColor = '#f9fafb';
+                                        promptInfo.style.border = '1px solid #e5e7eb';
+                                        promptInfo.style.borderRadius = '8px';
+                                        promptInfo.style.fontSize = '12px';
+                                        promptInfo.style.marginTop = '10px';
+
+                                        const promptTitle = document.createElement('div');
+                                        promptTitle.textContent = 'Enhanced Prompt:';
+                                        promptTitle.style.fontWeight = 'bold';
+                                        promptTitle.style.marginBottom = '5px';
+
+                                        const promptText = document.createElement('div');
+                                        promptText.textContent = data.prompt;
+
+                                        promptInfo.appendChild(promptTitle);
+                                        promptInfo.appendChild(promptText);
+                                        resultContainer.appendChild(promptInfo);
+                                    }
+
+                                    document.body.appendChild(resultContainer);
+
+                                    // If we have applyGeneratedTexture function, offer to apply first image by default
+                                    if (window.applyGeneratedTexture && typeof window.applyGeneratedTexture === 'function' && data.image1) {
+                                        if (confirm('Apply the first design to your mockup?')) {
+                                            window.applyGeneratedTexture('data:image/png;base64,' + data.image1);
+                                        }
+                                    }
+
+                                } catch (err) {
+                                    console.error('Error generating image:', err);
+                                    alert('Error: ' + err.message);
+                                } finally {
+                                    // Reset button state
+                                    customizeBtn.disabled = false;
+                                    customizeBtn.textContent = originalBtnText;
+                                }
+                            }, 'image/png');
+                        }, 'image/png');
+
+                    } catch (err) {
+                        console.error('Error preparing image:', err);
+                        alert('Error: ' + err.message);
+                        customizeBtn.disabled = false;
+                        customizeBtn.textContent = originalBtnText;
+                    }
+                });
+            }
+        });
+
+        // Define a function to apply generated textures to the 3D model
+        window.applyGeneratedTexture = function (imageUrl) {
+            // Load the new texture
+            const loader = new THREE.TextureLoader();
+            loader.crossOrigin = 'anonymous';
+            loader.load(
+                imageUrl,
+                function (texture) {
+                    console.log('Texture loaded successfully');
+                    // Find the material you want to apply it to
+                    if (window.garmentMaterial) {
+                        console.log('Applying texture to garmentMaterial');
+                        // Apply the texture to the material
+                        window.garmentMaterial.map = texture;
+                        window.garmentMaterial.needsUpdate = true;
+                    } else if (window.scene) {
+                        console.log('Searching for appropriate mesh in scene');
+                        // Try to find the t-shirt or garment in the scene
+                        window.scene.traverse(function (child) {
+                            if (child.isMesh &&
+                                (child.name.toLowerCase().includes('shirt') ||
+                                    child.name.toLowerCase().includes('garment') ||
+                                    child.name.toLowerCase().includes('tshirt') ||
+                                    child.name.toLowerCase().includes('tee'))) {
+                                console.log('Found mesh:', child.name);
+                                if (child.material) {
+                                    child.material.map = texture;
+                                    child.material.needsUpdate = true;
+                                    console.log('Applied texture to:', child.name);
+                                }
+                            }
+                        });
+                    } else {
+                        console.warn('Could not find material or scene to apply texture');
+                    }
+                },
+                undefined,
+                function (error) {
+                    console.error('Error loading texture:', error);
+                }
+            );
+        };
+
+        // Add this function to your modelLoader.js or inline in your HTML
+        // This is a placeholder - you'll need to implement this based on your specific 3D setup
+        window.applyGeneratedTexture = function (imageUrl) {
+            // Load the new texture
+            const loader = new THREE.TextureLoader();
+            loader.crossOrigin = 'anonymous';
+            loader.load(
+                imageUrl,
+                function (texture) {
+                    // Find the material you want to apply it to
+                    if (window.garmentMaterial) {
+                        // Apply the texture to the material
+                        window.garmentMaterial.map = texture;
+                        window.garmentMaterial.needsUpdate = true;
+                    } else if (window.scene) {
+                        // Try to find the t-shirt or garment in the scene
+                        window.scene.traverse(function (child) {
+                            if (child.isMesh && child.name.toLowerCase().includes('shirt') ||
+                                child.isMesh && child.name.toLowerCase().includes('garment')) {
+                                if (child.material) {
+                                    child.material.map = texture;
+                                    child.material.needsUpdate = true;
+                                }
+                            }
+                        });
+                    }
+                },
+                undefined,
+                function (error) {
+                    console.error('Error loading texture:', error);
+                }
+            );
+        };
+    </script>
+    <!-- Add upload interface popup at the end of <body> -->
+    <div id="uploadDesignPopup" style="display:none; position:fixed; bottom:24px; right:24px; width:520px; min-height:520px; background:white; border-radius:14px; box-shadow:0 4px 24px rgba(0,0,0,0.18); z-index:10000; padding:0; overflow:hidden;">
+      <div style="display:flex; flex-direction:column;">
+        <div style="display:flex; gap:1rem; align-items:center; padding:1.5rem 1.5rem 0.5rem 1.5rem; background:transparent;">
+          <button id="popupUploadBtn" style="background:#0a0a23; color:white; border:none; border-radius:2rem; padding:0.7rem 1.5rem; font-size:1rem; font-weight:500; cursor:pointer;">Upload Design</button>
+          <button id="popupSaveLayoutBtn" style="background:#f5f5f7; color:#18181b; border:none; border-radius:2rem; padding:0.7rem 1.5rem; font-size:1rem; font-weight:500; cursor:pointer;">Save Layout</button>
+          <button id="popupResetBtn" style="background:#f5f5f7; color:#18181b; border:none; border-radius:2rem; padding:0.7rem 1.5rem; font-size:1rem; font-weight:500; cursor:pointer;">Reset</button>
+          <div style="flex:1;"></div>
+          <button id="closeUploadDesignPopup" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#888;">&times;</button>
+        </div>
+        <!-- Position Guide Section -->
+        <div style="padding:1.5rem 1.5rem 0.5rem 1.5rem;">
+          <div style="text-align:center; font-weight:600; color:#b0b0b0; letter-spacing:0.05em; font-size:1.1rem; margin-bottom:1.2rem;">POSITION GUIDE</div>
+          <div style="display:flex; justify-content:center; align-items:flex-end; gap:2.5rem;">
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <img src="/images/position-guide/front.png" alt="Front Guide" style="width:180px; opacity:0.7; margin-bottom:0.5rem;" />
+              <div style="font-weight:700; color:#b0b0b0; font-size:1.1rem; letter-spacing:0.04em;">FRONT</div>
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+              <img src="/images/position-guide/back.png" alt="Back Guide" style="width:180px; opacity:0.7; margin-bottom:0.5rem;" />
+              <div style="font-weight:700; color:#b0b0b0; font-size:1.1rem; letter-spacing:0.04em;">BACK</div>
+            </div>
+          </div>
+        </div>
+        <!-- Blank content for now -->
+      </div>
+    </div>
+    <script>
+    // Upload popup logic
+    const uploadBtn = document.querySelector('.upload-btn');
+    const uploadPopup = document.getElementById('uploadDesignPopup');
+    const closeUploadPopup = document.getElementById('closeUploadDesignPopup');
+    if (uploadBtn && uploadPopup && closeUploadPopup) {
+      uploadBtn.addEventListener('click', () => {
+        uploadPopup.style.display = 'block';
+      });
+      closeUploadPopup.addEventListener('click', () => {
+        uploadPopup.style.display = 'none';
+      });
+    }
+    // Popup buttons functionality
+    const popupUploadBtn = document.getElementById('popupUploadBtn');
+    const popupSaveLayoutBtn = document.getElementById('popupSaveLayoutBtn');
+    const popupResetBtn = document.getElementById('popupResetBtn');
+    if (popupUploadBtn) {
+      popupUploadBtn.addEventListener('click', () => {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            alert('Design uploaded: ' + file.name); // Replace with your logic
+          }
+        };
+        input.click();
+      });
+    }
+    if (popupSaveLayoutBtn) {
+      popupSaveLayoutBtn.addEventListener('click', () => {
+        alert('Layout saved!'); // Replace with your logic
+      });
+    }
+    if (popupResetBtn) {
+      popupResetBtn.addEventListener('click', () => {
+        alert('Layout reset!'); // Replace with your logic
+      });
+    }
+    </script>
+    <script>
+    // Drawing canvas functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const drawingCanvas = document.getElementById('drawingCanvas');
+        const ctx = drawingCanvas ? drawingCanvas.getContext('2d') : null;
+        let isDrawing = false;
+        let lastX = 0;
+        let lastY = 0;
+        
+        // Create a hidden canvas to store the mask
+        window.maskCanvas = document.createElement('canvas');
+        const maskCtx = window.maskCanvas.getContext('2d');
+        
+        // Set up drawing canvas
+        function setupDrawingCanvas() {
+            if (!drawingCanvas || !ctx) return;
+            
+            // Resize canvas to match container
+            const container = document.getElementById('previewContent');
+            if (container) {
+                const rect = container.getBoundingClientRect();
+                drawingCanvas.width = rect.width;
+                drawingCanvas.height = rect.height;
+                
+                // Also set up mask canvas
+                window.maskCanvas.width = rect.width;
+                window.maskCanvas.height = rect.height;
+                
+                // Clear both canvases
+                ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                maskCtx.clearRect(0, 0, window.maskCanvas.width, window.maskCanvas.height);
+            }
+        }
+        
+        // Set up on load and on resize
+        setupDrawingCanvas();
+        window.addEventListener('resize', setupDrawingCanvas);
+        
+        // Drawing functions
+        function startDrawing(e) {
+            if (!isInpaintModeActive) return;
+            isDrawing = true;
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+        
+        function draw(e) {
+            if (!isDrawing || !isInpaintModeActive) return;
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(e.offsetX, e.offsetY);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.lineWidth = 20;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+            
+            // Also draw on mask canvas (solid white)
+            maskCtx.beginPath();
+            maskCtx.moveTo(lastX, lastY);
+            maskCtx.lineTo(e.offsetX, e.offsetY);
+            maskCtx.strokeStyle = 'white';
+            maskCtx.lineWidth = 20;
+            maskCtx.lineCap = 'round';
+            maskCtx.stroke();
+            
+            [lastX, lastY] = [e.offsetX, e.offsetY];
+        }
+        
+        function stopDrawing() {
+            isDrawing = false;
+        }
+        
+        // Track inpaint mode state
+        let isInpaintModeActive = false;
+        window.setInpaintingMode = function(active) {
+            isInpaintModeActive = active;
+            if (drawingCanvas) {
+                if (active) {
+                    // Enable drawing when inpaint mode is active
+                    drawingCanvas.style.pointerEvents = 'auto';
+                    drawingCanvas.style.cursor = 'crosshair';
+                    // Add event listeners for drawing
+                    drawingCanvas.addEventListener('mousedown', startDrawing);
+                    drawingCanvas.addEventListener('mousemove', draw);
+                    drawingCanvas.addEventListener('mouseup', stopDrawing);
+                    drawingCanvas.addEventListener('mouseout', stopDrawing);
+                } else {
+                    // Disable drawing when inpaint mode is inactive
+                    drawingCanvas.style.pointerEvents = 'none';
+                    drawingCanvas.style.cursor = 'default';
+                    // Remove event listeners for drawing
+                    drawingCanvas.removeEventListener('mousedown', startDrawing);
+                    drawingCanvas.removeEventListener('mousemove', draw);
+                    drawingCanvas.removeEventListener('mouseup', stopDrawing);
+                    drawingCanvas.removeEventListener('mouseout', stopDrawing);
+                    // Clear the drawing canvas
+                    if (ctx) {
+                        ctx.clearRect(0, 0, drawingCanvas.width, drawingCanvas.height);
+                    }
+                    if (maskCtx) {
+                        maskCtx.clearRect(0, 0, window.maskCanvas.width, window.maskCanvas.height);
+                    }
+                }
+            }
+        };
+
+        // Auto-Rotate Toggle Logic
+        const autoRotateToggleBtn = document.getElementById('autoRotateToggleBtn');
+        let autoRotateActive = true;
+        if (autoRotateToggleBtn) {
+            autoRotateToggleBtn.addEventListener('click', function() {
+                autoRotateActive = !autoRotateActive;
+                if (window.controls) {
+                    window.controls.autoRotate = autoRotateActive;
+                }
+                if (autoRotateActive) {
+                    autoRotateToggleBtn.textContent = 'Disable Auto-Rotate';
+                    autoRotateToggleBtn.style.background = '#1976d2';
+                    autoRotateToggleBtn.style.color = '#fff';
+                } else {
+                    autoRotateToggleBtn.textContent = 'Enable Auto-Rotate';
+                    autoRotateToggleBtn.style.background = '#fff';
+                    autoRotateToggleBtn.style.color = '#1976d2';
+                }
+            });
+            // Set initial state
+            autoRotateToggleBtn.textContent = 'Disable Auto-Rotate';
+            autoRotateToggleBtn.style.background = '#1976d2';
+            autoRotateToggleBtn.style.color = '#fff';
+        }
+
+        // Inpaint/View Mode Toggle Logic
+        const inpaintModeToggleBtn = document.getElementById('inpaintModeToggleBtn');
+        let inpaintModeActive = false;
+        if (inpaintModeToggleBtn) {
+            inpaintModeToggleBtn.addEventListener('click', function() {
+                inpaintModeActive = !inpaintModeActive;
+                if (inpaintModeActive) {
+                    inpaintModeToggleBtn.textContent = 'Inpaint Mode Enabled';
+                    inpaintModeToggleBtn.style.background = '#388e3c';
+                    inpaintModeToggleBtn.style.color = '#fff';
+                    // Disable OrbitControls and auto-rotation for inpainting
+                    if (window.controls) {
+                        window.controls.enabled = false;
+                        window.controls.autoRotate = false;
+                    }
+                    if (typeof window.setInpaintingMode === 'function') {
+                        window.setInpaintingMode(true);
+                    }
+                    // Show drawing canvas and set crosshair
+                    const drawingCanvas = document.getElementById('drawingCanvas');
+                    if (drawingCanvas) {
+                        drawingCanvas.style.pointerEvents = 'auto';
+                        drawingCanvas.style.cursor = 'crosshair';
+                    }
+                    // Show inpaint mask popup and overlay
+                    const inpaintMaskPopup = document.getElementById('inpaintMaskPopup');
+                    const inpaintMaskOverlay = document.getElementById('inpaintMaskOverlay');
+                    if (inpaintMaskPopup) {
+                        inpaintMaskPopup.style.display = 'block';
+                    }
+                    if (inpaintMaskOverlay) {
+                        inpaintMaskOverlay.style.display = 'block';
+                    }
+                } else {
+                    inpaintModeToggleBtn.textContent = 'Enable Inpaint Mode';
+                    inpaintModeToggleBtn.style.background = '#fff';
+                    inpaintModeToggleBtn.style.color = '#388e3c';
+                    // Enable OrbitControls and auto-rotation for viewing
+                    if (window.controls) {
+                        window.controls.enabled = true;
+                        window.controls.autoRotate = autoRotateActive;
+                    }
+                    if (typeof window.setInpaintingMode === 'function') {
+                        window.setInpaintingMode(false);
+                    }
+                    // Hide drawing canvas and set default cursor
+                    const drawingCanvas = document.getElementById('drawingCanvas');
+                    if (drawingCanvas) {
+                        drawingCanvas.style.pointerEvents = 'none';
+                        drawingCanvas.style.cursor = 'default';
+                    }
+                    // Hide inpaint mask popup and overlay
+                    const inpaintMaskPopup = document.getElementById('inpaintMaskPopup');
+                    const inpaintMaskOverlay = document.getElementById('inpaintMaskOverlay');
+                    if (inpaintMaskPopup) {
+                        inpaintMaskPopup.style.display = 'none';
+                    }
+                    if (inpaintMaskOverlay) {
+                        inpaintMaskOverlay.style.display = 'none';
+                    }
+                }
+                // Fix pointer events for Three.js canvas
+                const threeContainer = document.getElementById('three-container');
+                const webglCanvas = threeContainer ? threeContainer.querySelector('canvas') : null;
+                if (webglCanvas) {
+                    if (inpaintModeActive) {
+                        webglCanvas.style.pointerEvents = 'none'; // block rotation
+                    } else {
+                        webglCanvas.style.pointerEvents = 'auto'; // allow rotation
+                    }
+                }
+            });
+            // Set initial state
+            inpaintModeToggleBtn.textContent = 'Enable Inpaint Mode';
+            inpaintModeToggleBtn.style.background = '#fff';
+            inpaintModeToggleBtn.style.color = '#388e3c';
+            inpaintModeToggleBtn.disabled = false;
+            // Default to View mode (OrbitControls and auto-rotation enabled)
+            if (window.controls) {
+                window.controls.enabled = true;
+                window.controls.autoRotate = autoRotateActive;
+            }
+        }
+        // Attach close event for inpaint mask popup (ensure this runs after DOM is ready)
+        setTimeout(function() {
+            const closePopupBtn = document.getElementById('closeInpaintMaskPopup');
+            const inpaintMaskPopup = document.getElementById('inpaintMaskPopup');
+            const inpaintMaskOverlay = document.getElementById('inpaintMaskOverlay');
+            if (closePopupBtn && inpaintMaskPopup) {
+                closePopupBtn.onclick = function() {
+                    inpaintMaskPopup.style.display = 'none';
+                    if (inpaintMaskOverlay) inpaintMaskOverlay.style.display = 'none';
+                };
+            }
+        }, 0);
+
+        // Garment Color logic (hue palette)
+        const garmentHue = document.getElementById('garmentHue');
+        if (garmentHue) {
+            garmentHue.addEventListener('input', function() {
+                window.dispatchEvent(new CustomEvent('updateGarmentColor', { detail: { color: garmentHue.value } }));
+            });
+        }
+
+        // Background Color dropdown logic
+        const bgColorSelect = document.getElementById('backgroundColorSelect');
+        if (bgColorSelect) {
+            bgColorSelect.addEventListener('change', function() {
+                const color = bgColorSelect.value;
+                window.dispatchEvent(new CustomEvent('updateSceneBackground', { detail: { color } }));
+            });
+            // Set default background color on load
+            window.dispatchEvent(new CustomEvent('updateSceneBackground', { detail: { color: bgColorSelect.value } }));
+        }
+    });
+    </script>
+    <!-- Inpaint Mask Instruction Popup Overlay -->
+    <div id="inpaintMaskOverlay" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.18); z-index:99998; pointer-events:auto;"></div>
+    <!-- Inpaint Mask Instruction Popup -->
+    <div id="inpaintMaskPopup" style="display:none; position:fixed; top:30px; left:50%; transform:translateX(-50%); background:#fff; color:#222; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,0.18); z-index:99999; padding:2rem 2.5rem; font-size:1.15rem; font-weight:500; text-align:center; pointer-events:auto;">
+      <span>Mask the area where you want generation.</span>
+      <br><br>
+      <button id="closeInpaintMaskPopup" style="margin-top:0.5rem; background:#6366f1; color:#fff; border:none; border-radius:8px; padding:0.5rem 1.5rem; font-size:1rem; cursor:pointer;">OK</button>
+    </div>
+</body>
+</html>
